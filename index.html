@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>My Cute Workbench</title>
+    <style>
+        :root {
+            --pink: #FFB6C1;
+            --pink-dark: #FF8DA1;
+            --blue: #A2D2FF;
+            --blue-dark: #7CB9E8;
+            --yellow: #FFF3B0;
+            --green: #C1E1C1;
+            --bg: #FBF8F9; /* 奶油底色 */
+            --card-bg: #FFFFFF;
+            --text: #5A5A5A;
+            --text-light: #9E9E9E;
+            --danger: #FF7B7B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 90px;
+            font-size: 15px;
+        }
+
+        /* 顶部标题 */
+        header {
+            padding: 20px 20px 10px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--pink-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 内容区切换 */
+        .page {
+            display: none;
+            padding: 0 16px;
+            animation: slideUp 0.3s ease;
+        }
+        .page.active { display: block; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 可爱卡片 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,182,193,0.2);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title span.icon { font-size: 18px; }
+
+        /* 列表样式 */
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #f0f0f0;
+        }
+        .list-item:last-child { border-bottom: none; }
+
+        /* 勾选框 */
+        .check-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--pink);
+            margin-right: 12px;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .check-circle.checked {
+            background: var(--pink);
+            border-color: var(--pink);
+        }
+        .check-circle.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .item-text {
+            flex: 1;
+            font-size: 15px;
+        }
+        .completed .item-text {
+            color: var(--text-light);
+            text-decoration: line-through;
+        }
+        
+        /* 删除按钮 */
+        .del-btn {
+            color: #ffb3b3;
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        /* 输入框 */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            background: #FAFAFA;
+            font-size: 14px;
+            outline: none;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--blue);
+            background: #FFF;
+        }
+        textarea { resize: none; min-height: 80px; }
+        
+        .add-btn {
+            background: var(--pink);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* 财务快速记账区 */
+        .finance-tags {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .f-tag {
+            background: #F0F4F8;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+        .f-tag.active {
+            background: #FFE5EC;
+            color: var(--pink-dark);
+            border-color: var(--pink);
+        }
+
+        /* 可视化图表区 */
+        .chart-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-box {
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid #f0f0f0;
+        }
+        .stat-num {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--pink-dark);
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* 打卡热力图 (可视化) */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: #F5F5F5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            color: #ccc;
+        }
+        .heatmap-cell.lv1 { background: #FFE5EC; color: var(--pink-dark); }
+        .heatmap-cell.lv2 { background: #FFB6C1; color: white; }
+        .heatmap-cell.lv3 { background: #FF8DA1; color: white; }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 25px 0;
+            border-top: 1px solid #f0f0f0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-light);
+            font-size: 10px;
+            gap: 4px;
+            transition: 0.2s;
+        }
+        .nav-item .icon { font-size: 22px; }
+        .nav-item.active { color: var(--pink-dark); transform: translateY(-2px); }
+
+    </style>
+</head>
+<body>
+
+    <header id="headerTitle">☁️ 日常 SOP</header>
+
+    <!-- 页面 1: SOP & 排便打卡 -->
+    <div id="page-sop" class="page active">
+        <!-- 排便打卡 (特化) -->
+        <div class="card" style="background: #FFF8E7;">
+            <div class="card-title">💩 今天的排便打卡</div>
+            <div class="input-group">
+                <input type="text" id="poopNote" placeholder="备注（如：正常/顺畅）">
+                <button class="add-btn" style="background:#F4D03F;" onclick="logPoop()">💩 打卡</button>
+            </div>
+            <div id="poopStatus" style="margin-top: 10px; font-size: 13px; color: #999;"></div>
+        </div>
+
+        <!-- 每日 SOP -->
+        <div class="card">
+            <div class="card-title">☀️ 每日 SOP</div>
+            <div id="list-daily"></div>
+            <div class="input-group">
+                <input type="text" id="input-daily" placeholder="添加每日习惯...">
+                <button class="add-btn" onclick="addItem('daily')">+</button>
+            </div>
+        </div>
+
+        <!-- 每周/每月折叠 -->
+        <div class="card">
+            <div class="card-title" onclick="toggleSection('weekly')">📅 每周 SOP <span>▼</span></div>
+            <div id="section-weekly">
+                <div id="list-weekly"></div>
+                <div class="input-group">
+                    <input type="text" id="input-weekly" placeholder="添加每周事项...">
+                    <button class="add-btn" onclick="addItem('weekly')">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" onclick="toggleSection('monthly')">📆 每月 SOP <span>▼</span></div>
+            <div id="section-monthly">
+                <div id="list-monthly"></div>
+                <div class="input-group">
+                    <input type="text" id="input-monthly" placeholder="添加每月事项...">
+                    <button class="add-btn" onclick="addItem('monthly')">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面 2: 收藏库 (娱乐 & 日语) -->
+    <div id="page-collection" class="page">
+        <div class="card">
+            <div class="card-title">🎮 待玩游戏</div>
+            <div id="list-games"></div>
+            <div class="input-group">
+                <input type="text" id="input-games" placeholder="想玩的游戏...">
+                <button class="add-btn" onclick="addItem('games')">+</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🎬 待看电影/剧</div>
+            <div id="list-movies"></div>
+            <div class="input-group">
+                <input type="text" id="input-movies" placeholder="想看的影视...">
+                <button class="add-btn" onclick="addItem('movies')">+</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title" style="color: var(--blue-dark);">🇯🇵 日语学习任务</div>
+            <div id="list-japanese"></div>
+            <div class="input-group">
+                <input type="text" id="input-japanese" placeholder="学习任务（如：背N3单词）...">
+                <button class="add-btn" style="background: var(--blue);" onclick="addItem('japanese')">+</button>
+            </div>
+            <textarea id="note-japanese" placeholder="日语学习笔记心得..." style="margin-top:10px; font-size: 13px;"></textarea>
+        </div>
+    </div>
+
+    <!-- 页面 3: 健康与财务 -->
+    <div id="page-life" class="page">
+        <div class="card" style="border-color: #FFD1D1;">
+            <div class="card-title" style="color: var(--danger);">🩺 病情记录与住院时间线</div>
+            <div id="list-medical"></div>
+            <div class="input-group">
+                <input type="text" id="input-medical" placeholder="记录指标/身体感受/住院日...">
+                <button class="add-btn" style="background: var(--danger);" onclick="addItem('medical')">+</button>
+            </div>
+            <textarea id="note-health" placeholder="详细的身体感受或用药备忘录..." style="margin-top:10px; font-size: 13px;"></textarea>
+        </div>
+
+        <div class="card" style="border-color: #E2F0D9;">
+            <div class="card-title" style="color: #4CAF50;">💰 今天的财务记账</div>
+            <div id="list-finance" style="max-height: 150px; overflow-y: auto;"></div>
+            <div class="finance-tags" id="financeTags">
+                <div class="f-tag active" onclick="selectTag(this)">餐饮</div>
+                <div class="f-tag" onclick="selectTag(this)">交通</div>
+                <div class="f-tag" onclick="selectTag(this)">购物</div>
+                <div class="f-tag" onclick="selectTag(this)">医疗</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="input-finance-amount" placeholder="金额" style="width: 60px; flex-shrink:0;">
+                <input type="text" id="input-finance-desc" placeholder="说明（如：午饭）">
+                <button class="add-btn" style="background: #4CAF50;" onclick="addFinance()">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面 4: 数据复盘可视化 -->
+    <div id="page-stats" class="page">
+        <div class="chart-stats">
+            <div class="stat-box">
+                <div class="stat-num" id="stat-today-check">0</div>
+                <div class="stat-label">今日完成 SOP</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="stat-today-poop" style="color: #F4D03F;">0</div>
+                <div class="stat-label">今日排便打卡</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="stat-finance" style="color: #4CAF50;">0</div>
+                <div class="stat-label">今日支出 (元)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="stat-total-sop" style="color: var(--blue-dark);">0</div>
+                <div class="stat-label">历史累计打卡</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📅 近两周打卡热力图</div>
+            <p style="font-size: 12px; color: #999; margin-bottom: 10px;">颜色越深，代表当天完成的日常任务越多</p>
+            <div class="heatmap-grid" id="heatmap">
+                <!-- JS动态生成14个格子 -->
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📈 复盘总结</div>
+            <div style="font-size: 14px; line-height: 1.6; color: #666;" id="summaryText">
+                加载中...
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('sop', '☁️ 日常 SOP')">
+            <span class="icon">✅</span><span>SOP</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('collection', '🎮 娱乐与日语')">
+            <span class="icon">🍿</span><span>收藏库</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('life', '🩺 健康与财务')">
+            <span class="icon">🩺</span><span>记录</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('stats', '📊 复盘可视化')">
+            <span class="icon">📊</span><span>数据</span>
+        </div>
+    </nav>
+
+    <script>
+        // --- 1. 初始化数据 ---
+        const defaultData = {
+            daily: [
+                { id: '1', text: '洗漱 / 喝水', completed: false },
+                { id: '2', text: '听一期播客', completed: false },
+                { id: '3', text: '阅读至少一个小时', completed: false },
+                { id: '4', text: '散步至少 2000 步', completed: false }
+            ],
+            weekly: [{ id: 'w1', text: '周五晚打扫卫生', completed: false }],
+            monthly: [{ id: 'm1', text: '整理照片', completed: false }],
+            games: [{ id: 'g1', text: '塞尔达传说', completed: false }],
+            movies: [{ id: 'mv1', text: '奥本海默', completed: false }],
+            japanese: [{ id: 'j1', text: '多邻国打卡', completed: false }],
+            medical: [{ id: 'md1', text: '11.05 血常规复查', completed: false }],
+            finance: [], // { date: '2023-11-05', amount: 25, desc: '午饭', tag: '餐饮' }
+            poopLogs: {}, // { '2023-11-05': '正常' }
+            totalSopHistory: [] // 记录每天完成的sop数量 { date: '2023-11-05', count: 3 }
+        };
+
+        let data = JSON.parse(localStorage.getItem('cuteWorkbenchData')) || defaultData;
+        
+        // 补全数据结构防止旧版本报错
+        if(!data.finance) data.finance = [];
+        if(!data.poopLogs) data.poopLogs = {};
+        if(!data.totalSopHistory) data.totalSopHistory = [];
+
+        // 当天日期字符串 (YYYY-MM-DD)
+        const todayStr = new Date().toISOString().split('T')[0];
+        let currentFinanceTag = '餐饮';
+
+        function save() {
+            localStorage.setItem('cuteWorkbenchData', JSON.stringify(data));
+            updateStats();
+        }
+
+        // --- 2. 通用列表渲染 ---
+        function renderList(key, listId, isMedical = false) {
+            const container = document.getElementById(listId);
+            if(!container) return;
+            container.innerHTML = '';
+
+            if(data[key].length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#ccc; font-size:13px;">暂无记录，添加一个吧✨</div>';
+                return;
+            }
+
+            data[key].forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = `list-item ${item.completed ? 'completed' : ''}`;
+                
+                div.innerHTML = `
+                    <div class="check-circle ${item.completed ? 'checked' : ''}" onclick="toggleItem('${key}', ${index})"></div>
+                    <span class="item-text">${item.text}</span>
+                    <span class="del-btn" onclick="deleteItem('${key}', ${index})">✕</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addItem(key) {
+            const input = document.getElementById(`input-${key}`);
+            if(!input || !input.value.trim()) return;
+            
+            data[key].push({ id: Date.now().toString(), text: input.value.trim(), completed: false });
+            input.value = '';
+            renderList(key, `list-${key}`);
+            save();
+        }
+
+        function toggleItem(key, index) {
+            data[key][index].completed = !data[key][index].completed;
+            
+            // 如果是日常 SOP，记录复盘数据
+            if(key === 'daily') {
+                const todayCount = data.daily.filter(i => i.completed).length;
+                const historyIndex = data.totalSopHistory.findIndex(h => h.date === todayStr);
+                if(historyIndex >= 0) {
+                    data.totalSopHistory[historyIndex].count = todayCount;
+                } else {
+                    data.totalSopHistory.push({ date: todayStr, count: todayCount });
+                }
+            }
+            
+            renderList(key, `list-${key}`);
+            save();
+        }
+
+        function deleteItem(key, index) {
+            if(confirm('确定删除吗？')) {
+                data[key].splice(index, 1);
+                renderList(key, `list-${key}`);
+                save();
+            }
+        }
+
+        // --- 3. 特殊功能：排便打卡 ---
+        function logPoop() {
+            const note = document.getElementById('poopNote').value || '正常';
+            data.poopLogs[todayStr] = note;
+            document.getElementById('poopNote').value = '';
+            updatePoopUI();
+            save();
+            alert('💩 打卡成功！肠道健康很重要哦~');
+        }
+
+        function updatePoopUI() {
+            const status = document.getElementById('poopStatus');
+            if(data.poopLogs[todayStr]) {
+                status.innerHTML = `✅ 今日已打卡：${data.poopLogs[todayStr]}`;
+            } else {
+                status.innerHTML = `⏳ 今日还未打卡...`;
+            }
+        }
+
+        // --- 4. 财务记账 ---
+        function selectTag(el) {
+            document.querySelectorAll('.f-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            currentFinanceTag = el.innerText;
+        }
+
+        function addFinance() {
+            const amountStr = document.getElementById('input-finance-amount').value;
+            const desc = document.getElementById('input-finance-desc').value;
+            if(!amountStr || isNaN(amountStr)) return alert('请输入正确的金额');
+
+            data.finance.unshift({ 
+                date: todayStr, 
+                amount: parseFloat(amountStr), 
+                desc: desc || '未备注', 
+                tag: currentFinanceTag 
+            });
+            
+            document.getElementById('input-finance-amount').value = '';
+            document.getElementById('input-finance-desc').value = '';
+            renderFinance();
+            save();
+        }
+
+        function renderFinance() {
+            const container = document.getElementById('list-finance');
+            container.innerHTML = '';
+            // 只显示今天的账目
+            const todayFinance = data.finance.filter(f => f.date === todayStr);
+            if(todayFinance.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:10px; color:#ccc; font-size:13px;">今天还没有消费记录🛒</div>';
+                return;
+            }
+            todayFinance.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <span style="font-size:12px; background:#eee; padding:2px 6px; border-radius:4px; margin-right:8px;">${f.tag}</span>
+                    <span class="item-text">${f.desc}</span>
+                    <span style="color:#4CAF50; font-weight:bold;">-${f.amount}元</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- 5. 可视化与数据计算 ---
+        function updateStats() {
+            // 今日完成 SOP 数
+            const todaySopCount = data.daily.filter(i => i.completed).length;
+            document.getElementById('stat-today-check').innerText = todaySopCount;
+            
+            // 今日排便
+            document.getElementById('stat-today-poop').innerText = data.poopLogs[todayStr] ? '1' : '0';
+
+            // 今日支出
+            const todayExpense = data.finance.filter(f => f.date === todayStr).reduce((sum, f) => sum + f.amount, 0);
+            document.getElementById('stat-finance').innerText = todayExpense;
+
+            // 历史总打卡 (粗略计算历史记录总和)
+            const totalHistory = data.totalSopHistory.reduce((sum, h) => sum + h.count, 0);
+            document.getElementById('stat-total-sop').innerText = totalHistory;
+
+            // 生成近14天热力图
+            renderHeatmap();
+            generateSummary();
+        }
+
+        function renderHeatmap() {
+            const grid = document.getElementById('heatmap');
+            grid.innerHTML = '';
+            
+            // 获取过去 13 天 + 今天，共14天
+            for(let i = 13; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dStr = d.toISOString().split('T')[0];
+                
+                // 查找那天的完成数
+                let count = 0;
+                if (dStr === todayStr) {
+                    count = data.daily.filter(x => x.completed).length;
+                } else {
+                    const record = data.totalSopHistory.find(h => h.date === dStr);
+                    if(record) count = record.count;
+                }
+
+                // 根据数量决定颜色深度
+                let level = '';
+                if (count > 0 && count <= 2) level = 'lv1';
+                else if (count > 2 && count <= 4) level = 'lv2';
+                else if (count > 4) level = 'lv3';
+
+                const cell = document.createElement('div');
+                cell.className = `heatmap-cell ${level}`;
+                // 显示日期数字
+                cell.innerText = d.getDate();
+                grid.appendChild(cell);
+            }
+        }
+
+        function generateSummary() {
+            const todaySopCount = data.daily.filter(i => i.completed).length;
+            const totalDaily = data.daily.length;
+            const poopDone = data.poopLogs[todayStr] ? '已完成 ✅' : '未完成 ❌';
+            const todayExpense = data.finance.filter(f => f.date === todayStr).reduce((sum, f) => sum + f.amount, 0);
+            
+            let feedback = "";
+            if (todaySopCount === totalDaily && totalDaily > 0) {
+                feedback = "太棒了！今天的 SOP 全部完成，给你一朵小红花 🌸";
+            } else if (todaySopCount > 0) {
+                feedback = "今天有在慢慢推进，很棒，不要给自己太大压力哦 🧸";
+            } else {
+                feedback = "今天还没开始打卡，没关系，休息也是为了更好地出发 ☁️";
+            }
+
+            document.getElementById('summaryText').innerHTML = `
+                <p>✨ <b>今日复盘：</b>你完成了 <b>${todaySopCount}/${totalDaily}</b> 项日常。${feedback}</p>
+                <p style="margin-top:8px;">💩 <b>肠道健康：</b>排便打卡状态：${poopDone}</p>
+                <p style="margin-top:8px;">💰 <b>财务情况：</b>今天一共支出了 <b>${todayExpense}</b> 元。</p>
+                <p style="margin-top:8px;">📖 <b>日语与娱乐：</b>请记得去收藏库看看想玩的游戏，学一点日语，劳逸结合呀。</p>
+                <p style="margin-top:8px; color:#999; font-size:12px;">（每天睡前看一眼这里，给自己一个大大的拥抱）</p>
+            `;
+        }
+
+        // --- 6. 页面切换与初始化 ---
+        function switchTab(tabId, title) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(`page-${tabId}`).classList.add('active');
+            document.getElementById('headerTitle').innerText = title;
+            
+            const navs = ['sop', 'collection', 'life', 'stats'];
+            const index = navs.indexOf(tabId);
+            if(index >= 0) {
+                document.querySelectorAll('.nav-item')[index].classList.add('active');
+            }
+
+            if(tabId === 'stats') {
+                updateStats();
+            }
+        }
+
+        // 折叠面板
+        function toggleSection(id) {
+            const el = document.getElementById(`section-${id}`);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 自动保存文本框
+        function bindTextareaSave(elId, dataKey) {
+            const el = document.getElementById(elId);
+            if(!el) return;
+            el.value = data[dataKey] || '';
+            el.addEventListener('input', () => {
+                data[dataKey] = el.value;
+                save();
+            });
+        }
+
+        // 初始化渲染
+        window.onload = function() {
+            // 基础列表
+            renderList('daily', 'list-daily');
+            renderList('weekly', 'list-weekly');
+            renderList('monthly', 'list-monthly');
+            renderList('games', 'list-games');
+            renderList('movies', 'list-movies');
+            renderList('japanese', 'list-japanese');
+            renderList('medical', 'list-medical');
+            
+            // 财务、排便
+            renderFinance();
+            updatePoopUI();
+            updateStats();
+
+            // 文本框绑定
+            bindTextareaSave('note-japanese', 'noteJapanese');
+            bindTextareaSave('note-health', 'noteHealth');
+        };
+
+    </script>
+</body>
+</html>
